@@ -22,8 +22,15 @@ public class ClientTFTP {
        
     }
 
-    private static boolean isLastPacket(){
-       
+    private static boolean isLastPacket(DatagramPacket dp){
+       if(dp.getLength()<516) //vérifier aussi si le paquet n'est pas un code erreur
+       {
+    	   return true;
+       }
+       else
+       {
+    	   return false;
+       }
     }
 
     private static void sendAcknowledgment(short idBlock, DatagramSocket ds,InetAddress ia, int port){
@@ -38,7 +45,7 @@ public class ClientTFTP {
 				e.printStackTrace();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+				e.printStackTrace();
 		}
 		
         
