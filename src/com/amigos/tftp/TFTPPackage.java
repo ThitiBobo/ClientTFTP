@@ -16,19 +16,19 @@ public class TFTPPackage {
     private String _filename;
     private byte[] _data;
 
-    public TFTPPackage(String filename, String mode){
+    public TFTPPackage(String filename, String mode){ //lecture ecriture RRQ WRQ
 
     }
 
-    public TFTPPackage(short idBlock, byte[] data){
+    public TFTPPackage(short idBlock, byte[] data){ //construire un bloc DATA
 
     }
 
-    public TFTPPackage(short idBlock){
+    public TFTPPackage(short idBlock){ //ACK
 
     }
 
-    public TFTPPackage(short errorCode, String message){
+    public TFTPPackage(short errorCode, String message){ //erreur
 
     }
 
