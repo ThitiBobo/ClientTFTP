@@ -44,6 +44,7 @@ public class TFTPPackage {
         _length = 4 + data.length;
 
     }
+    
 
     public TFTPPackage(short idBlock){ //ACK
         _opCode = OP_CODE_ACK;
@@ -51,6 +52,7 @@ public class TFTPPackage {
         _length = 4;
     }
 
+    
     public TFTPPackage(short errorCode, String message){ //ERROR
         _opCode = OP_CODE_ERROR;
         _errorCode = errorCode;
@@ -58,6 +60,7 @@ public class TFTPPackage {
         _length = 4 + message.getBytes().length + 1;
     }
 
+    
     public TFTPPackage(byte[] packet){
         ByteBuffer buffer = ByteBuffer.wrap(packet);
         _opCode = buffer.getShort();
@@ -100,6 +103,7 @@ public class TFTPPackage {
 
     }
 
+    
     public byte[] getByteArray(){
         ByteBuffer buffer = ByteBuffer.allocate(_length);
         buffer.putShort(_opCode);
@@ -133,6 +137,7 @@ public class TFTPPackage {
         return buffer.array();
     }
 
+    
 
     @Override
     public String toString() {
@@ -148,4 +153,6 @@ public class TFTPPackage {
                 ", _length=" + _length +
                 '}';
     }
+    
 }
+

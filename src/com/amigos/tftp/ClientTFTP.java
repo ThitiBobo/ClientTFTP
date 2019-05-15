@@ -12,6 +12,9 @@ public class ClientTFTP {
     public static int receiveFile(){
         try {
 			DatagramSocket ds= new DatagramSocket();
+			
+			
+			
 		} catch (SocketException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -35,6 +38,11 @@ public class ClientTFTP {
  			DatagramPacket dp = new DatagramPacket(wrqByte, wrqByte.length, IPserv, portServ);
  			ds.send(dp);
  			
+ 			//byte[] buffer = new byte[128];
+    		//DatagramPacket rep = new DatagramPacket(buffer, 128);
+    		//ds.receive(rep);
+ 			
+ 			
  			
  			
  			
@@ -56,6 +64,8 @@ public class ClientTFTP {
        
     }
 
+    
+    
     private static boolean isLastPacket(DatagramPacket dp){
        if(dp.getLength()<516) //vérifier aussi si le paquet n'est pas un code erreur
        {
@@ -66,6 +76,8 @@ public class ClientTFTP {
     	   return false;
        }
     }
+    
+    
 
     private static void sendAcknowledgment(short idBlock, DatagramSocket ds,InetAddress ia, int port){
        
@@ -88,5 +100,6 @@ public class ClientTFTP {
 
 
 
+    
 
 }
