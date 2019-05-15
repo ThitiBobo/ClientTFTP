@@ -17,17 +17,28 @@ public class ClientTFTP {
 			e.printStackTrace();
 		}
         
+        
+        
+        
         return 0;
     }
 
     public static int sendFile(InetAddress IPserv,  int portServ, String nomFichierLocal){
     	
-    	TFTPPackage wrq=new TFTPPackage(nomFichierLocal, ""); //TO DO modeeee!!!!!!!!!
+    	TFTPPackage wrq = new TFTPPackage((short) 2, nomFichierLocal, ""); //TO DO modeeee!!!!!!!!!
      	byte[] wrqByte = wrq.getByteArray();
+     	
+     	TFTPPackage ack = new TFTPPackage((short) portServ);
+     	
      	 try {
  			DatagramSocket ds= new DatagramSocket();
  			DatagramPacket dp = new DatagramPacket(wrqByte, wrqByte.length, IPserv, portServ);
  			ds.send(dp);
+ 			
+ 			
+ 			
+ 			
+ 			
  			
  			
  			
@@ -38,9 +49,6 @@ public class ClientTFTP {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-    	
-    	
-    	
     	
     	
     	

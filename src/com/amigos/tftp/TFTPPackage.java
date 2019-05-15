@@ -30,14 +30,14 @@ public class TFTPPackage {
 
     private int _length;
 
-    public TFTPPackage(short opCode, String filename, String mode){
+    public TFTPPackage(short opCode, String filename, String mode){ // lecture (RRQ) ou écriture (WRQ)
         _opCode = opCode;
         _filename = filename;
         _mode = mode;
         _length = 2 + filename.getBytes().length + mode.getBytes().length + 2;
     }
 
-    public TFTPPackage(short idBlock, byte[] data){
+    public TFTPPackage(short idBlock, byte[] data){ //DATA
         _opCode = OP_CODE_DATA;
         _idBlock = idBlock;
         _data = data;
@@ -45,13 +45,13 @@ public class TFTPPackage {
 
     }
 
-    public TFTPPackage(short idBlock){
+    public TFTPPackage(short idBlock){ //ACK
         _opCode = OP_CODE_ACK;
         _idBlock = idBlock;
         _length = 4;
     }
 
-    public TFTPPackage(short errorCode, String message){
+    public TFTPPackage(short errorCode, String message){ //ERROR
         _opCode = OP_CODE_ERROR;
         _errorCode = errorCode;
         _errorMessage = message;
@@ -96,7 +96,7 @@ public class TFTPPackage {
         }else if(_opCode == OP_CODE_ERROR){
             _errorCode = buffer.getShort();
         }
->>>>>>> 0ae693a9351d9fcf1ad8367df1e1ca213b200462
+
 
     }
 
