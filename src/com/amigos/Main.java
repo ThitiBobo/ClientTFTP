@@ -22,7 +22,6 @@ public class Main {
         }
 
 
-
         TFTPPackage receive = new TFTPPackage(data);
         System.out.println(receive);
     }
