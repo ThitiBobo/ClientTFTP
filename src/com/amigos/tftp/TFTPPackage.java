@@ -27,36 +27,40 @@ public class TFTPPackage {
     private String _filename;
     private byte[] _data;
 
+
     private int _length;
 
-    public TFTPPackage(short opCode, String filename, String mode){
+    public TFTPPackage(short opCode, String filename, String mode){ // lecture (RRQ) ou écriture (WRQ)
         _opCode = opCode;
         _filename = filename;
         _mode = mode;
         _length = 2 + filename.getBytes().length + mode.getBytes().length + 2;
     }
 
-    public TFTPPackage(short idBlock, byte[] data){
+    public TFTPPackage(short idBlock, byte[] data){ //DATA
         _opCode = OP_CODE_DATA;
         _idBlock = idBlock;
         _data = data;
         _length = 4 + data.length;
 
     }
+    
 
-    public TFTPPackage(short idBlock){
+    public TFTPPackage(short idBlock){ //ACK
         _opCode = OP_CODE_ACK;
         _idBlock = idBlock;
         _length = 4;
     }
 
-    public TFTPPackage(short errorCode, String message){
+    
+    public TFTPPackage(short errorCode, String message){ //ERROR
         _opCode = OP_CODE_ERROR;
         _errorCode = errorCode;
         _errorMessage = message;
         _length = 4 + message.getBytes().length + 1;
     }
 
+    
     public TFTPPackage(byte[] packet){
         ByteBuffer buffer = ByteBuffer.wrap(packet);
         _opCode = buffer.getShort();
@@ -96,8 +100,10 @@ public class TFTPPackage {
             _errorCode = buffer.getShort();
         }
 
+
     }
 
+    
     public byte[] getByteArray(){
         ByteBuffer buffer = ByteBuffer.allocate(_length);
         buffer.putShort(_opCode);
@@ -131,6 +137,7 @@ public class TFTPPackage {
         return buffer.array();
     }
 
+    
 
     @Override
     public String toString() {
@@ -146,4 +153,6 @@ public class TFTPPackage {
                 ", _length=" + _length +
                 '}';
     }
+    
 }
+
