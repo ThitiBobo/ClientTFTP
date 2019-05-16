@@ -26,8 +26,43 @@ public class TFTPPackage {
     private String _errorMessage;
     private String _filename;
     private byte[] _data;
-
     private int _length;
+
+    public int getMaxSizeBlock() {
+        return maxSizeBlock;
+    }
+
+    public short getIdBlock() {
+        return _idBlock;
+    }
+
+    public short getOpCode() {
+        return _opCode;
+    }
+
+    public short getErrorCode() {
+        return _errorCode;
+    }
+
+    public String getMode() {
+        return _mode;
+    }
+
+    public String getErrorMessage() {
+        return _errorMessage;
+    }
+
+    public String getFilename() {
+        return _filename;
+    }
+
+    public byte[] getData() {
+        return _data;
+    }
+
+    public int getLength() {
+        return _length;
+    }
 
     public TFTPPackage(short opCode, String filename, String mode){
         _opCode = opCode;
@@ -62,7 +97,7 @@ public class TFTPPackage {
         _opCode = buffer.getShort();
         if((_opCode == OP_CODE_READ) || (_opCode == OP_CODE_WRITE)){
 
-            int fistZeroByte = 0;
+            int firstZeroByte = 0;
             int secondZeroByte = 0;
             int findFlag = 0;
 
@@ -70,23 +105,22 @@ public class TFTPPackage {
             while(findFlag < 2){
                 if (buffer.get() == (byte)0){
                     if (findFlag == 0)
-                        fistZeroByte = buffer.position() - 1;
+                        firstZeroByte = buffer.position() - 1;
                     else
                         secondZeroByte = buffer.position() - 1;
                     findFlag++;
                 }
             }
+            byte[] filename = new byte[firstZeroByte - 2];
             buffer.position(2);
-            StringBuilder builder = new StringBuilder();
-            while (buffer.position() < fistZeroByte){
-                builder.append(buffer.getChar());
-            }
-            _filename = builder.toString();
-            builder = new StringBuilder();
-            while (buffer.position() < secondZeroByte){
-                builder.append(buffer.getChar());
-            }
-            _mode = builder.toString();
+            buffer.get(filename,0,firstZeroByte - 2);
+            _filename = new String(filename);
+
+            buffer.position(firstZeroByte + 1);
+            byte[] mode = new byte[secondZeroByte - firstZeroByte - 1];
+            buffer.get(mode,0,secondZeroByte - firstZeroByte - 1);
+            _mode = new String(mode);
+
         }else if(_opCode == OP_CODE_DATA){
             _idBlock = buffer.getShort();
 

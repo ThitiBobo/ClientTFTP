@@ -16,14 +16,15 @@ public class ClientTFTP {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+        return 0;
     }
 
     public static int sendFile(){
-       
+       return 0;
     }
 
     private static boolean isLastPacket(DatagramPacket dp){
-       if(dp.getLength()<516) //vérifier aussi si le paquet n'est pas un code erreur
+       if(dp.getLength()<516) //vï¿½rifier aussi si le paquet n'est pas un code erreur
        {
     	   return true;
        }
