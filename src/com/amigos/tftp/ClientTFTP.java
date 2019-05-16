@@ -19,10 +19,10 @@ public class ClientTFTP
 
             FileOutputStream fea = new FileOutputStream("cheminrelatif" + fileName);
             DatagramSocket ds = new DatagramSocket();
-            //      TFTPPackage rrq = new TFTPPackage(fileName, ""); //mode � changer
-            //       byte[] rrqByte = rrq.getByteArray();
-            //      DatagramPacket RRQ = new DatagramPacket(rrqByte, rrqByte.length, ia, port);
-            //        ds.send(RRQ);
+            TFTPPackage rrq = new TFTPPackage(TFTPPackage.OP_CODE_READ, fileName, ""); //mode � changer
+            byte[] rrqByte = rrq.getByteArray();
+            DatagramPacket RRQ = new DatagramPacket(rrqByte, rrqByte.length, ia, port);
+            ds.send(RRQ);
 
             //receive data
             //fea.write(data1,2,10);
@@ -45,7 +45,7 @@ public class ClientTFTP
     public static int sendFile(InetAddress IPserv, int portServ, String nomFichierLocal)
     {
 
-        TFTPPackage wrq = new TFTPPackage((short) 2, nomFichierLocal, ""); //TO DO modeeee!!!!!!!!!
+        TFTPPackage wrq = new TFTPPackage(TFTPPackage.OP_CODE_WRITE, nomFichierLocal, ""); //TO DO modeeee!!!!!!!!!
         byte[] wrqByte = wrq.getByteArray();
 
         TFTPPackage ack = new TFTPPackage((short) portServ);
@@ -54,11 +54,17 @@ public class ClientTFTP
         {
             DatagramSocket ds = new DatagramSocket();
             DatagramPacket dp = new DatagramPacket(wrqByte, wrqByte.length, IPserv, portServ);
-            ds.send(dp);
+            ds.send(dp); //La machine A �met un "WRQ" vers adr_ip_serv, port_serv (Machine B)
 
-            //byte[] buffer = new byte[128];
-            //DatagramPacket rep = new DatagramPacket(buffer, 128);
-            //ds.receive(rep);
+            byte[] ackByte = ack.getByteArray();
+            DatagramPacket rep = new DatagramPacket(ackByte, 512);
+            ds.receive(rep);
+
+            TFTPPackage data = new TFTPPackage((short) 1, ackByte);
+            byte[] dataByte = data.getByteArray();
+            DatagramPacket dpp = new DatagramPacket(dataByte, dataByte.length, IPserv, portServ);
+            ds.send(dpp);
+
         }
         catch (SocketException e)
         {
