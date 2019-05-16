@@ -5,6 +5,10 @@
  */
 package com.amigos.graphical;
 
+import java.awt.Color;
+import javax.swing.JFileChooser;
+import javax.swing.JTextPane;
+
 /**
  *
  * @author Dorian
@@ -18,6 +22,20 @@ public class JFormClientTFTP extends javax.swing.JFrame
     public JFormClientTFTP()
     {
         initComponents();
+        this.initInterface();
+    }
+
+    private void initInterface()
+    {
+        this._tbPort.setText("69");
+        this._tbPort.setEditable(false);
+        this._tbPort.setBackground(Color.LIGHT_GRAY);
+
+        this._tbRemote.setText("C:\\");
+        this._tbRemote.setEditable(false);
+        this._tbRemote.setBackground(Color.LIGHT_GRAY);
+
+        this.setResizable(false);
     }
 
     /**
@@ -30,71 +48,191 @@ public class JFormClientTFTP extends javax.swing.JFrame
     private void initComponents()
     {
 
+        jScrollPane1 = new javax.swing.JScrollPane();
+        _tbSrc = new javax.swing.JTextPane();
+        _btnBrowseSrc = new javax.swing.JButton();
+        jLabel1 = new javax.swing.JLabel();
+        jScrollPane2 = new javax.swing.JScrollPane();
+        _tbRemote = new javax.swing.JTextPane();
+        jLabel2 = new javax.swing.JLabel();
+        jScrollPane3 = new javax.swing.JScrollPane();
+        _tbIpServer = new javax.swing.JTextPane();
+        jLabel3 = new javax.swing.JLabel();
+        _btnSend = new javax.swing.JButton();
+        _btnReceive = new javax.swing.JButton();
+        _btnClose = new javax.swing.JButton();
+        jLabel4 = new javax.swing.JLabel();
+        jScrollPane4 = new javax.swing.JScrollPane();
+        _tbPort = new javax.swing.JTextPane();
+
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+
+        jScrollPane1.setViewportView(_tbSrc);
+
+        _btnBrowseSrc.setText("Browse");
+        _btnBrowseSrc.addActionListener(new java.awt.event.ActionListener()
+        {
+            public void actionPerformed(java.awt.event.ActionEvent evt)
+            {
+                _btnBrowseSrcActionPerformed(evt);
+            }
+        });
+
+        jLabel1.setText("Fichier local");
+
+        jScrollPane2.setViewportView(_tbRemote);
+
+        jLabel2.setText("Fichier distant");
+
+        jScrollPane3.setViewportView(_tbIpServer);
+
+        jLabel3.setText("IP Serveur");
+
+        _btnSend.setText("Send");
+        _btnSend.addActionListener(new java.awt.event.ActionListener()
+        {
+            public void actionPerformed(java.awt.event.ActionEvent evt)
+            {
+                _btnSendActionPerformed(evt);
+            }
+        });
+
+        _btnReceive.setText("Receive");
+        _btnReceive.addActionListener(new java.awt.event.ActionListener()
+        {
+            public void actionPerformed(java.awt.event.ActionEvent evt)
+            {
+                _btnReceiveActionPerformed(evt);
+            }
+        });
+
+        _btnClose.setText("Close");
+        _btnClose.addActionListener(new java.awt.event.ActionListener()
+        {
+            public void actionPerformed(java.awt.event.ActionEvent evt)
+            {
+                _btnCloseActionPerformed(evt);
+            }
+        });
+
+        jLabel4.setText("Port");
+
+        jScrollPane4.setViewportView(_tbPort);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 400, Short.MAX_VALUE)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jLabel3)
+                    .addComponent(jLabel2)
+                    .addComponent(jLabel1)
+                    .addComponent(jLabel4))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(_btnSend)
+                        .addGap(28, 28, 28)
+                        .addComponent(_btnReceive)
+                        .addGap(35, 35, 35)
+                        .addComponent(_btnClose)
+                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
+                                .addGap(3, 3, 3)
+                                .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 333, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                .addComponent(jScrollPane4, javax.swing.GroupLayout.PREFERRED_SIZE, 46, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                    .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 333, Short.MAX_VALUE)
+                                    .addComponent(jScrollPane1))))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(_btnBrowseSrc)
+                        .addGap(9, 9, 9))))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 300, Short.MAX_VALUE)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(_btnBrowseSrc)
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addComponent(jLabel1)
+                        .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addGap(18, 18, 18)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel2))
+                .addGap(18, 18, 18)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel3))
+                .addGap(18, 18, 18)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jLabel4)
+                    .addComponent(jScrollPane4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(36, 36, 36)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(_btnSend)
+                    .addComponent(_btnReceive)
+                    .addComponent(_btnClose))
+                .addContainerGap(22, Short.MAX_VALUE))
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    /**
-     * @param args the command line arguments
-     */
-    public static void main(String args[])
+    private void _btnSendActionPerformed(java.awt.event.ActionEvent evt)//GEN-FIRST:event__btnSendActionPerformed
+    {//GEN-HEADEREND:event__btnSendActionPerformed
+        // Envoyer le fichier
+    }//GEN-LAST:event__btnSendActionPerformed
+
+    private void _btnReceiveActionPerformed(java.awt.event.ActionEvent evt)//GEN-FIRST:event__btnReceiveActionPerformed
+    {//GEN-HEADEREND:event__btnReceiveActionPerformed
+        // Recevoir le fichier
+    }//GEN-LAST:event__btnReceiveActionPerformed
+
+    private void _btnCloseActionPerformed(java.awt.event.ActionEvent evt)//GEN-FIRST:event__btnCloseActionPerformed
+    {//GEN-HEADEREND:event__btnCloseActionPerformed
+        this.setVisible(false);
+        this.dispose();
+    }//GEN-LAST:event__btnCloseActionPerformed
+
+    private void _btnBrowseSrcActionPerformed(java.awt.event.ActionEvent evt)//GEN-FIRST:event__btnBrowseSrcActionPerformed
+    {//GEN-HEADEREND:event__btnBrowseSrcActionPerformed
+        this._tbSrc.setText(this.getPathWithFileChoose());
+    }//GEN-LAST:event__btnBrowseSrcActionPerformed
+
+    private String getPathWithFileChoose()
     {
-        /* Set the Nimbus look and feel */
-        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
-        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
-         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html
-         */
-        try
+        String path = "";
+        JFileChooser fileDialog = new JFileChooser();
+        fileDialog.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
+        if (fileDialog.showOpenDialog(null) == JFileChooser.APPROVE_OPTION)
         {
-            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels())
-            {
-                if ("Nimbus".equals(info.getName()))
-                {
-                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
-                    break;
-                }
-            }
+            path = fileDialog.getSelectedFile().getAbsolutePath();
         }
-        catch (ClassNotFoundException ex)
-        {
-            java.util.logging.Logger.getLogger(JFormClientTFTP.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        }
-        catch (InstantiationException ex)
-        {
-            java.util.logging.Logger.getLogger(JFormClientTFTP.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        }
-        catch (IllegalAccessException ex)
-        {
-            java.util.logging.Logger.getLogger(JFormClientTFTP.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        }
-        catch (javax.swing.UnsupportedLookAndFeelException ex)
-        {
-            java.util.logging.Logger.getLogger(JFormClientTFTP.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        }
-        //</editor-fold>
-
-        /* Create and display the form */
-        java.awt.EventQueue.invokeLater(new Runnable()
-        {
-            public void run()
-            {
-                new JFormClientTFTP().setVisible(true);
-            }
-        });
+        return path;
     }
-
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton _btnBrowseSrc;
+    private javax.swing.JButton _btnClose;
+    private javax.swing.JButton _btnReceive;
+    private javax.swing.JButton _btnSend;
+    private javax.swing.JTextPane _tbIpServer;
+    private javax.swing.JTextPane _tbPort;
+    private javax.swing.JTextPane _tbRemote;
+    private javax.swing.JTextPane _tbSrc;
+    private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel2;
+    private javax.swing.JLabel jLabel3;
+    private javax.swing.JLabel jLabel4;
+    private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JScrollPane jScrollPane2;
+    private javax.swing.JScrollPane jScrollPane3;
+    private javax.swing.JScrollPane jScrollPane4;
     // End of variables declaration//GEN-END:variables
 }
