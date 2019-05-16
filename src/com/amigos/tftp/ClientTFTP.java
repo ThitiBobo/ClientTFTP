@@ -19,10 +19,10 @@ public class ClientTFTP
 
             FileOutputStream fea = new FileOutputStream("cheminrelatif" + fileName);
             DatagramSocket ds = new DatagramSocket();
-            TFTPPackage rrq = new TFTPPackage(fileName, ""); //mode � changer
-            byte[] rrqByte = rrq.getByteArray();
-            DatagramPacket RRQ = new DatagramPacket(rrqByte, rrqByte.length, ia, port);
-            ds.send(RRQ);
+            //      TFTPPackage rrq = new TFTPPackage(fileName, ""); //mode � changer
+            //       byte[] rrqByte = rrq.getByteArray();
+            //      DatagramPacket RRQ = new DatagramPacket(rrqByte, rrqByte.length, ia, port);
+            //        ds.send(RRQ);
 
             //receive data
             //fea.write(data1,2,10);

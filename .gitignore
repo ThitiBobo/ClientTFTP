@@ -32,3 +32,4 @@ ClientTFTP.iml
 .project
 .settings/
 ClienTFTP/
+/build/
