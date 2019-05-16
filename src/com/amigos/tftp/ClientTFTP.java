@@ -1,3 +1,4 @@
+
 package com.amigos.tftp;
 
 import java.io.FileNotFoundException;
@@ -120,9 +121,6 @@ public class ClientTFTP {
 
 
     }
-
-
-
 
 
 }
