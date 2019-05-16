@@ -159,19 +159,19 @@ public class ClientTFTP
 
     private static boolean isLastPacket(DatagramPacket dp)
     {
-        if (dp.getLength() < 516) //v�rifier aussi si le paquet n'est pas un code erreur
+        return dp.getLength() < 516 ? true : false;
+        /*if (dp.getLength() < 516) //v�rifier aussi si le paquet n'est pas un code erreur
         {
             return true;
         }
         else
         {
             return false;
-        }
+        }*/
     }
 
     private static void sendAcknowledgment(short idBlock, DatagramSocket ds, InetAddress ia, int port)
     {
-
         try
         {
             TFTPPackage ack = new TFTPPackage(idBlock);

@@ -14,7 +14,8 @@ public class Main
     {
 
         //test TFTPPackage
-        TFTPPackage packet = new TFTPPackage(TFTPPackage.OP_CODE_READ,"file Test",TFTPPackage.MODE_OCTET);
+        byte[] b = {1,2,3,4,5,6};
+        TFTPPackage packet = new TFTPPackage(TFTPPackage.OP_CODE_DATA,b);
         byte[] data = packet.getByteArray();
         System.out.println("packet: " + Arrays.toString(data));
         String str1 = "file Test";

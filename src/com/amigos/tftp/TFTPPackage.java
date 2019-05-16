@@ -1,8 +1,9 @@
 package com.amigos.tftp;
 
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
+
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
-import java.nio.charset.Charset;
 import java.util.Arrays;
 
 public class TFTPPackage {
@@ -126,11 +127,15 @@ public class TFTPPackage {
 
         }else if(_opCode == OP_CODE_DATA){
             _idBlock = buffer.getShort();
+            int pos;
+            _data = new byte[buffer.limit() - buffer.position()];
+            buffer.get(_data,0,buffer.limit() - buffer.position());
 
         }else if(_opCode == OP_CODE_ACK){
             _idBlock = buffer.getShort();
         }else if(_opCode == OP_CODE_ERROR){
             _errorCode = buffer.getShort();
+            throw new NotImplementedException();
         }
 
 
