@@ -49,7 +49,7 @@ public class ClientTFTP {
     	TFTPPackage wrq = new TFTPPackage(TFTPPackage.OP_CODE_WRITE, nomFichierLocal, ""); //TO DO modeeee!!!!!!!!!
      	byte[] wrqByte = wrq.getByteArray();
 
-     	TFTPPackage ack = new TFTPPackage((short) portServ);
+     	TFTPPackage ack = new TFTPPackage((short) 0);
 
      	
      	
@@ -58,9 +58,11 @@ public class ClientTFTP {
  			DatagramPacket dp = new DatagramPacket(wrqByte, wrqByte.length, IPserv, portServ);
  			ds.send(dp); //La machine A émet un "WRQ" vers adr_ip_serv, port_serv (Machine B)
 
- 			byte[] ackByte = ack.getByteArray();
-    		DatagramPacket rep = new DatagramPacket(ackByte, 512);
+ 			byte[] ackByte = new byte[4];
+    		DatagramPacket rep = new DatagramPacket(ackByte, ackByte.length);
     		ds.receive(rep);
+    		
+    		TFTPPackage tp = new TFTPPackage();
     		
     		TFTPPackage data = new TFTPPackage((short) 1, ackByte);
     		byte[] dataByte = data.getByteArray();
