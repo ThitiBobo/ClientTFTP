@@ -12,6 +12,7 @@ import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
+import java.nio.ByteBuffer;
 
 public class ClientTFTP
 {
@@ -94,12 +95,12 @@ public class ClientTFTP
         }
     }
 
-    public static int sendFile(InetAddress IPserv, short portServ, String pathFichierLocal) throws FileNotFoundException
+    public static int sendFile(InetAddress IPserv, short portServ, String nomFichierLocal, String pathFichierLocal) throws FileNotFoundException
     {
         // Ouvrir nomFichierLocal
         FileInputStream fileStream = new FileInputStream(pathFichierLocal);
         // Création d'un paquet WRQ
-        TFTPPackage wrq = new TFTPPackage(TFTPPackage.OP_CODE_WRITE, pathFichierLocal, ""); //TO DO modeeee!!!!!!!!!
+        TFTPPackage wrq = new TFTPPackage(TFTPPackage.OP_CODE_WRITE, nomFichierLocal, ""); //TO DO modeeee!!!!!!!!!
         byte[] wrqByte = wrq.getByteArray();
 
         try
@@ -111,34 +112,50 @@ public class ClientTFTP
             ds.send(dp); //La machine A �met un "WRQ" vers adr_ip_serv, port_serv (Machine B)
 
             // on reçoit le paquet du serveur après émission du WRQ
-            byte[] ackByte = new byte[4];
-            DatagramPacket rep = new DatagramPacket(ackByte, ackByte.length);
+            byte[] ackByte0 = new byte[4];
+            DatagramPacket rep = new DatagramPacket(ackByte0, ackByte0.length);
             ds.receive(rep);
-            // Vérifier que la paquet est bien un ACK 0
             TFTPPackage ack0 = new TFTPPackage((short) 0);
-            // Si oui, on commence l'envoi du fichier
-            if (ack0.getByteArray() == ackByte)
+            // Si on reçoit un ACK0, on commence l'envoi du fichier
+            if (getPacketOPcode(ackByte0) == TFTPPackage.OP_CODE_ACK)
             {
                 int readResult = 0;
                 int offset = 0;
-                int idBlock = 1;
+                short idBlock = 1;
+                TFTPPackage ackN = null;
+                byte[] ackServResponse;
                 do
                 {
+                    // on présume que le serveur va envoyer un ACK alors on crée un array de taille 4 mais si le serveur répond
+                    // autre chose qu'un ack N, peut poser PB -> à changer, pourrait être plus rigoureux
+                    ackServResponse = new byte[4];
                     // Bloc de data de 512 octets
-                    byte[] blocData = new byte[512];
+                    byte[] dataBlock = new byte[512];
                     // On lit 512 octets dans blocData
-                    readResult = fileStream.read(blocData, offset, blocData.length);
-                    // On crée un nouveau paquet data
 
-//                    data = new TFTPPackage((short) 1, ackByte);
-//                    byte[] dataByte = data.getByteArray();
-//                    DatagramPacket dpp = new DatagramPacket(dataByte, dataByte.length, IPserv, portServ);
-//                    ds.send(dpp);
+                    /**
+                     * GENERE UNE EXCEPTION -> A CHANGER (16/05/2019) 22h40*
+                     * java.lang.IndexOutOfBoundsException
+                     */
+                    readResult = fileStream.read(dataBlock, offset, dataBlock.length);
+                    // On crée un nouveau paquet DATA(idBlock)
+                    byte[] packet = (new TFTPPackage(idBlock, dataBlock)).getByteArray();
+                    DatagramPacket dpp = new DatagramPacket(packet, packet.length, IPserv, portServ);
+                    // On l'envoie
+                    ds.send(dpp);
+
+                    // On réceptionne le ACK du serveur (norme du protocole)
+                    DatagramPacket serverResponse = new DatagramPacket(ackServResponse, ackServResponse.length);
+                    ds.receive(serverResponse);
                     offset += 512;
                     idBlock++;
+
                 }
-                // tant que EOF n'a pas été rencontré
-                while (readResult != -1);
+                // tant que EOF n'a pas été rencontré et que le ACK est bon
+                while (readResult != -1 && getPacketOPcode(ackServResponse) == TFTPPackage.OP_CODE_ACK /**
+                         * && getPacketNo(ackServResponse) == idBlock*
+                         */
+                        );
             }
 
         }
@@ -146,15 +163,31 @@ public class ClientTFTP
         {
             // TODO Auto-generated catch block
             e.printStackTrace();
+            System.out.println(e);
         }
         catch (IOException e)
         {
             // TODO Auto-generated catch block
             e.printStackTrace();
+            System.out.println(e);
         }
-
         return 0;
+    }
 
+    private static short getPacketOPcode(byte[] buff)
+    {
+        byte[] twoFirstBytes = new byte[2];
+        twoFirstBytes[0] = buff[0];
+        twoFirstBytes[1] = buff[1];
+        return ByteBuffer.wrap(twoFirstBytes).getShort();
+    }
+
+    private static short getPacketNo(byte[] buff)
+    {
+        byte[] SecondAndThirdBytes = new byte[2];
+        SecondAndThirdBytes[0] = buff[2];
+        SecondAndThirdBytes[1] = buff[3];
+        return ByteBuffer.wrap(SecondAndThirdBytes).getShort();
     }
 
     private static boolean isLastPacket(DatagramPacket dp)
