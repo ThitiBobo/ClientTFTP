@@ -27,8 +27,9 @@ hs_err_pid*
 /nbproject
 build.xml
 manifest.mf
-ClientTFTP.iml
+*.iml
 .classpath
 .project
 .settings/
 ClienTFTP/
+.idea/
