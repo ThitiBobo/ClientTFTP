@@ -33,6 +33,7 @@ manifest.mf
 .settings/
 ClienTFTP/
 .idea/
+out/*
 
 /build/
 
