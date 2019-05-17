@@ -114,7 +114,7 @@ public class ClientTFTP
         // Création d'un paquet WRQ
         TFTPPackage wrq = new TFTPPackage(TFTPPackage.OP_CODE_WRITE, nomFichierLocal, TFTPPackage.MODE_OCTET);
         byte[] wrqByte = wrq.getByteArray();
-        System.out.println(Arrays.toString(wrqByte));
+        System.out.println("WRQ : " + Arrays.toString(wrqByte));
 
         try
         {
@@ -128,6 +128,7 @@ public class ClientTFTP
             byte[] ackByte0 = new byte[4];
             DatagramPacket rep = new DatagramPacket(ackByte0, ackByte0.length);
             ds.receive(rep);
+            System.out.println("Reponse serveur : " + Arrays.toString(ackByte0));
             // Si on reçoit un ACK0, on commence l'envoi du fichier
             if (getPacketOPcode(ackByte0) == TFTPPackage.OP_CODE_ACK)
             {
@@ -153,13 +154,11 @@ public class ClientTFTP
                         }
                         else if (byteCourant > -128 && byteCourant < 128)
                         {
-                            System.out.print((char) byteCourant);
                             dataList.add((byte) byteCourant);
                             //System.out.println((byte) byteCourant);
                         }
                     }
 
-                    System.out.println();
                     // on crée un array de bytes à partir de la liste de bytes
                     byte[] dataArray = new byte[dataList.size()];
                     for (int i = 0; i < dataList.size(); i++)
@@ -174,17 +173,19 @@ public class ClientTFTP
                     TFTPPackage packetObject = new TFTPPackage(idBlock, dataArray);
                     byte[] packet = packetObject.getByteArray();
 
-                    System.out.println(Arrays.toString(packet));
-                    DatagramPacket dppData = new DatagramPacket(packet, packet.length, IPserv, portServ);
+                    System.out.println("DATA(1) : " + Arrays.toString(packet));
+                    DatagramPacket dppData = new DatagramPacket(packet, packet.length, IPserv, rep.getPort());
                     // On l'envoie
-                    ///////////////// PROB
 
+                    ds.send(dppData);
+
+                    ///////////////// PROB
                     // On réceptionne le ACK du serveur (norme du protocole) // PROB : RECOIT UN ACK0
                     DatagramPacket serverResponse = new DatagramPacket(ackServResponse, ackServResponse.length);
                     ds.receive(serverResponse);
 
                     ackServResponse = serverResponse.getData();
-                    System.out.println(Arrays.toString(ackServResponse));
+                    System.out.println("Réponse du serveur : " + Arrays.toString(ackServResponse));
                     idBlock++;
 
                 }
@@ -208,6 +209,7 @@ public class ClientTFTP
             e.printStackTrace();
             System.out.println(e);
         }
+
         return 0;
     }
 

@@ -15,7 +15,7 @@ public class Main
         //test sendFile
         try
         {
-            ClientTFTP.sendFile(InetAddress.getByName("localhost"), (short) 69, "petit.txt", "C:\\Users\\Dorian\\Desktop\\petit.txt");
+            ClientTFTP.sendFile(InetAddress.getByName("localhost"), (short) 69, "test.txt", "C:\\Users\\Dorian\\Desktop\\test.txt");
 
             //ClientTFTP.sendFile(InetAddress.getByName("169.254.169.34"), (short) 69, "test.txt", "/home/thiti/IdeaProjects/ClientTFTP/test.txt");
             //ClientTFTP.receiveFile("DSC_0220.JPG",69,InetAddress.getByName("10.42.145.176"));
