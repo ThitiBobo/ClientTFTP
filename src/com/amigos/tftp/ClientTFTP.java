@@ -36,7 +36,7 @@ public class ClientTFTP
                 System.out.println("Envoie du RRQ");
                 ds.send(RRQ);
 
-                short numPaquet = 1;
+                byte numPaquet = 1;
                 byte[] buffer = new byte[516];
                 DatagramPacket dr = new DatagramPacket(buffer, 516);
                 do
@@ -61,7 +61,7 @@ public class ClientTFTP
                     }
                     else
                     {
-                        sendAcknowledgment((short) (numPaquet - 1), ds, ia, port);
+                        sendAcknowledgment((byte) (numPaquet - 1), ds, ia, port);
                     }
                 }
                 while (!isLastPacket(dr));
@@ -75,7 +75,7 @@ public class ClientTFTP
                         System.out.println("Receiving message...");
                         ds.receive(dr); // receive the packet
                         System.out.println("Message received");
-                        sendAcknowledgment((short) (numPaquet - 1), ds, ia, port);
+                        sendAcknowledgment((byte) (numPaquet - 1), ds, ia, port);
                     }
                     catch (SocketTimeoutException e)
                     {
@@ -128,12 +128,11 @@ public class ClientTFTP
             byte[] ackByte0 = new byte[4];
             DatagramPacket rep = new DatagramPacket(ackByte0, ackByte0.length);
             ds.receive(rep);
-            TFTPPackage ack0 = new TFTPPackage((short) 0);
             // Si on reçoit un ACK0, on commence l'envoi du fichier
             if (getPacketOPcode(ackByte0) == TFTPPackage.OP_CODE_ACK)
             {
                 int eof = 0;
-                short idBlock = 1;
+                byte idBlock = 1;
                 TFTPPackage ackN = null;
                 byte[] ackServResponse;
                 do
@@ -178,7 +177,6 @@ public class ClientTFTP
                     System.out.println(Arrays.toString(packet));
                     DatagramPacket dppData = new DatagramPacket(packet, packet.length, IPserv, portServ);
                     // On l'envoie
-                    ds.send(dppData);
                     ///////////////// PROB
 
                     // On réceptionne le ACK du serveur (norme du protocole) // PROB : RECOIT UN ACK0
@@ -187,12 +185,6 @@ public class ClientTFTP
 
                     ackServResponse = serverResponse.getData();
                     System.out.println(Arrays.toString(ackServResponse));
-                    ///debug
-                    for (int i = 0; i < ackServResponse.length; i++)
-                    {
-                        System.out.println(ackServResponse[i]);
-                    }
-                    ///
                     idBlock++;
 
                 }
@@ -248,7 +240,7 @@ public class ClientTFTP
         }*/
     }
 
-    private static void sendAcknowledgment(short idBlock, DatagramSocket ds, InetAddress ia, int port)
+    private static void sendAcknowledgment(byte idBlock, DatagramSocket ds, InetAddress ia, int port)
     {
         try
         {
