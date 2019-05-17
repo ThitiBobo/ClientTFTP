@@ -30,12 +30,12 @@ public class ClientTFTP
                 FileOutputStream fea = new FileOutputStream("cheminrelatif" + fileName);
                 System.out.println("Ouverture du socket");
                 DatagramSocket ds = new DatagramSocket();
-                TFTPPackage rrq = new TFTPPackage(TFTPPackage.OP_CODE_READ, fileName, "ecriture"); //mode � changer
+                TFTPPackage rrq = new TFTPPackage(TFTPPackage.OP_CODE_READ, fileName, TFTPPackage.MODE_OCTET); //mode � changer
                 byte[] rrqByte = rrq.getByteArray();
                 DatagramPacket RRQ = new DatagramPacket(rrqByte, rrqByte.length, ia, port);
                 System.out.println("Envoie du RRQ");
                 ds.send(RRQ);
-
+                System.out.println("Envoie du RRQ");
                 byte numPaquet = 1;
                 byte[] buffer = new byte[516];
                 DatagramPacket dr = new DatagramPacket(buffer, 516);
@@ -56,26 +56,27 @@ public class ClientTFTP
                     if (data.getIdBlock() == numPaquet)
                     {
                         fea.write(data.getData(), 0, 512);
-                        sendAcknowledgment(numPaquet, ds, ia, port);
+                        sendAcknowledgment(numPaquet, ds, ia, dr.getPort());
                         numPaquet++;
                     }
                     else
                     {
                         sendAcknowledgment((byte) (numPaquet - 1), ds, ia, port);
                     }
+                    System.out.println("lst packet" + isLastPacket(dr));
                 }
                 while (!isLastPacket(dr));
 
                 ds.setSoTimeout(1000);   // set the timeout in millisecounds.
 
-                while (true)
+                while (ds.isConnected())
                 {        // receive data until timeout
                     try
                     {
                         System.out.println("Receiving message...");
                         ds.receive(dr); // receive the packet
                         System.out.println("Message received");
-                        sendAcknowledgment((byte) (numPaquet - 1), ds, ia, port);
+                        sendAcknowledgment((byte) (numPaquet - 1), ds, ia, dr.getPort());
                     }
                     catch (SocketTimeoutException e)
                     {
@@ -102,6 +103,7 @@ public class ClientTFTP
                 // TODO Auto-generated catch block
                 e.printStackTrace();
             }
+            System.out.println("Fin");
             return 0;
 
         }
