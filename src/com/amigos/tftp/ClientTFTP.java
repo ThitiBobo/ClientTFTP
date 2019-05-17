@@ -13,6 +13,7 @@ import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Arrays;
 
 public class ClientTFTP
@@ -45,7 +46,8 @@ public class ClientTFTP
                     System.out.println(Arrays.toString(dr.getData()));
 
                     TFTPPackage data = new TFTPPackage(dr.getData());
-                    if (data.getOpCode() == TFTPPackage.OP_CODE_ERROR) {
+                    if (data.getOpCode() == TFTPPackage.OP_CODE_ERROR)
+                    {
                         System.out.println("Error");
                     }
                     // verifier si la paquet recue est pas une erreur
@@ -61,7 +63,8 @@ public class ClientTFTP
                     {
                         sendAcknowledgment((short) (numPaquet - 1), ds, ia, port);
                     }
-                } while (!isLastPacket(dr));
+                }
+                while (!isLastPacket(dr));
 
                 ds.setSoTimeout(1000);   // set the timeout in millisecounds.
 
@@ -111,6 +114,7 @@ public class ClientTFTP
         // Création d'un paquet WRQ
         TFTPPackage wrq = new TFTPPackage(TFTPPackage.OP_CODE_WRITE, nomFichierLocal, TFTPPackage.MODE_OCTET);
         byte[] wrqByte = wrq.getByteArray();
+        System.out.println(Arrays.toString(wrqByte));
 
         try
         {
@@ -128,8 +132,7 @@ public class ClientTFTP
             // Si on reçoit un ACK0, on commence l'envoi du fichier
             if (getPacketOPcode(ackByte0) == TFTPPackage.OP_CODE_ACK)
             {
-                int readResult = 0;
-                int offset = 0;
+                int eof = 0;
                 short idBlock = 1;
                 TFTPPackage ackN = null;
                 byte[] ackServResponse;
@@ -138,30 +141,63 @@ public class ClientTFTP
                     // on présume que le serveur va envoyer un ACK alors on crée un array de taille 4 mais si le serveur répond
                     // autre chose qu'un ack N, peut poser PB -> à changer, pourrait être plus rigoureux
                     ackServResponse = new byte[4];
-                    // Bloc de data de 512 octets
-                    byte[] dataBlock = new byte[512];
-                    // On lit 512 octets dans blocData
+                    // Liste de bytes de data
+                    ArrayList<Byte> dataList = new ArrayList<>();
+                    int byteCourant;
+                    for (int i = 0; i < 512; i++)
+                    {
+                        byteCourant = fileStream.read();
+                        if (byteCourant == -1)
+                        {
+                            eof = -1;
+                            break;
+                        }
+                        else if (byteCourant > -128 && byteCourant < 128)
+                        {
+                            System.out.print((char) byteCourant);
+                            dataList.add((byte) byteCourant);
+                            //System.out.println((byte) byteCourant);
+                        }
+                    }
 
-                    /**
-                     * GENERE UNE EXCEPTION -> A CHANGER (16/05/2019) 22h40*
-                     * java.lang.IndexOutOfBoundsException
-                     */
-                    readResult = fileStream.read(dataBlock, offset, dataBlock.length);
+                    System.out.println();
+                    // on crée un array de bytes à partir de la liste de bytes
+                    byte[] dataArray = new byte[dataList.size()];
+                    for (int i = 0; i < dataList.size(); i++)
+                    {
+                        dataArray[i] = dataList.get(i);
+                    }
+
+                    //////////////// MAJ 17/05 -- PROBLEME IL SEMBLE QUE PUMPKIN NE RECOIT JAMAIS LE DATA(1)
+                    // OU ALORS LE DATA(1) N'EST PAS BIEN FORMÉ
+                    // "UDP PACKET RECEIVE FAILED"
                     // On crée un nouveau paquet DATA(idBlock)
-                    byte[] packet = (new TFTPPackage(idBlock, dataBlock)).getByteArray();
-                    DatagramPacket dpp = new DatagramPacket(packet, packet.length, IPserv, portServ);
-                    // On l'envoie
-                    ds.send(dpp);
+                    TFTPPackage packetObject = new TFTPPackage(idBlock, dataArray);
+                    byte[] packet = packetObject.getByteArray();
 
-                    // On réceptionne le ACK du serveur (norme du protocole)
+                    System.out.println(Arrays.toString(packet));
+                    DatagramPacket dppData = new DatagramPacket(packet, packet.length, IPserv, portServ);
+                    // On l'envoie
+                    ds.send(dppData);
+                    ///////////////// PROB
+
+                    // On réceptionne le ACK du serveur (norme du protocole) // PROB : RECOIT UN ACK0
                     DatagramPacket serverResponse = new DatagramPacket(ackServResponse, ackServResponse.length);
                     ds.receive(serverResponse);
-                    offset += 512;
+
+                    ackServResponse = serverResponse.getData();
+                    System.out.println(Arrays.toString(ackServResponse));
+                    ///debug
+                    for (int i = 0; i < ackServResponse.length; i++)
+                    {
+                        System.out.println(ackServResponse[i]);
+                    }
+                    ///
                     idBlock++;
 
                 }
                 // tant que EOF n'a pas été rencontré et que le ACK est bon
-                while (readResult != -1 && getPacketOPcode(ackServResponse) == TFTPPackage.OP_CODE_ACK /**
+                while (eof != -1 && getPacketOPcode(ackServResponse) == TFTPPackage.OP_CODE_ACK /**
                          * && getPacketNo(ackServResponse) == idBlock*
                          */
                         );
