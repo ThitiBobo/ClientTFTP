@@ -8,11 +8,11 @@ import java.util.Arrays;
 
 public class TFTPPackage {
 
-    public static short OP_CODE_READ = 1;
-    public static short OP_CODE_WRITE = 2;
-    public static short OP_CODE_DATA = 3;
-    public static short OP_CODE_ACK = 4;
-    public static short OP_CODE_ERROR = 5;
+    public static byte OP_CODE_READ = 1;
+    public static byte OP_CODE_WRITE = 2;
+    public static byte OP_CODE_DATA = 3;
+    public static byte OP_CODE_ACK = 4;
+    public static byte OP_CODE_ERROR = 5;
 
     public static String MODE_NETASCII = "netascii";
     public static String MODE_OCTET = "octet";
@@ -20,9 +20,9 @@ public class TFTPPackage {
 
     private final int maxSizeBlock = 512;
 
-    private short _idBlock;
-    private short _opCode;
-    private short _errorCode;
+    private byte _idBlock;
+    private byte _opCode;
+    private byte _errorCode;
     private String _mode;
     private String _errorMessage;
     private String _filename;
@@ -65,14 +65,14 @@ public class TFTPPackage {
         return _length;
     }
 
-    public TFTPPackage(short opCode, String filename, String mode){ // lecture (RRQ) ou �criture (WRQ)
+    public TFTPPackage(byte opCode, String filename, String mode){ // lecture (RRQ) ou �criture (WRQ)
         _opCode = opCode;
         _filename = filename;
         _mode = mode;
         _length = 2 + filename.getBytes().length + mode.getBytes().length + 2;
     }
 
-    public TFTPPackage(short idBlock, byte[] data){ //DATA
+    public TFTPPackage(byte idBlock, byte[] data){ //DATA
         _opCode = OP_CODE_DATA;
         _idBlock = idBlock;
         _data = data;
@@ -81,14 +81,14 @@ public class TFTPPackage {
     }
     
 
-    public TFTPPackage(short idBlock){ //ACK
+    public TFTPPackage(byte idBlock){ //ACK
         _opCode = OP_CODE_ACK;
         _idBlock = idBlock;
         _length = 4;
     }
 
     
-    public TFTPPackage(short errorCode, String message){ //ERROR
+    public TFTPPackage(byte errorCode, String message){ //ERROR
         _opCode = OP_CODE_ERROR;
         _errorCode = errorCode;
         _errorMessage = message;
@@ -98,7 +98,8 @@ public class TFTPPackage {
     
     public TFTPPackage(byte[] packet){
         ByteBuffer buffer = ByteBuffer.wrap(packet);
-        _opCode = buffer.getShort();
+        buffer.position(1);
+        _opCode = buffer.get();
         if((_opCode == OP_CODE_READ) || (_opCode == OP_CODE_WRITE)){
 
             int firstZeroByte = 0;
@@ -126,15 +127,18 @@ public class TFTPPackage {
             _mode = new String(mode);
 
         }else if(_opCode == OP_CODE_DATA){
-            _idBlock = buffer.getShort();
+            buffer.get();
+            _idBlock = buffer.get();
             int pos;
             _data = new byte[buffer.limit() - buffer.position()];
             buffer.get(_data,0,buffer.limit() - buffer.position());
 
         }else if(_opCode == OP_CODE_ACK){
-            _idBlock = buffer.getShort();
+            buffer.get();
+            _idBlock = buffer.get();
         }else if(_opCode == OP_CODE_ERROR){
-            _errorCode = buffer.getShort();
+            buffer.get();
+            _errorCode = buffer.get();
             throw new NotImplementedException();
         }
 
@@ -144,7 +148,8 @@ public class TFTPPackage {
     
     public byte[] getByteArray(){
         ByteBuffer buffer = ByteBuffer.allocate(_length);
-        buffer.putShort(_opCode);
+        buffer.put((byte)0);
+        buffer.put(_opCode);
         if((_opCode == OP_CODE_READ) || (_opCode == OP_CODE_WRITE)){
             try {
                 buffer.put(_filename.getBytes("UTF-8"));
@@ -159,12 +164,15 @@ public class TFTPPackage {
             }
             buffer.put((byte)0);
         }else if(_opCode == OP_CODE_DATA){
-            buffer.putShort(_idBlock);
+            buffer.put((byte)0);
+            buffer.put(_idBlock);
             buffer.put(_data);
         }else if(_opCode == OP_CODE_ACK){
-            buffer.putShort(_idBlock);
+            buffer.put((byte)0);
+            buffer.put(_idBlock);
         }else if(_opCode == OP_CODE_ERROR){
-            buffer.putShort(_errorCode);
+            buffer.put((byte)0);
+            buffer.put(_errorCode);
             try {
                 buffer.put(_errorMessage.getBytes("UTF-8"));
             } catch (UnsupportedEncodingException e) {
