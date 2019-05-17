@@ -17,6 +17,8 @@ public class Main
         {
             ClientTFTP.sendFile(InetAddress.getByName("localhost"), (short) 69, "petit.txt", "C:\\Users\\Dorian\\Desktop\\petit.txt");
 
+            //ClientTFTP.sendFile(InetAddress.getByName("169.254.169.34"), (short) 69, "test.txt", "/home/thiti/IdeaProjects/ClientTFTP/test.txt");
+            //ClientTFTP.receiveFile("DSC_0220.JPG",69,InetAddress.getByName("10.42.145.176"));
         }
         catch (Exception e)
         {
@@ -45,7 +47,7 @@ public class Main
 ////
 ////        TFTPPackage receive = new TFTPPackage(data);
 ////        System.out.println(receive);
-//        JFormClientTFTP form = new JFormClientTFTP();
+//       JFormClientTFTP form = new JFormClientTFTP();
 //        form.setVisible(true);
 //    }
 //    catch (UnknownHostException ex

@@ -26,11 +26,14 @@ public class ClientTFTP
             try
             {
 
+                System.out.println("Creation du fichier");
                 FileOutputStream fea = new FileOutputStream("cheminrelatif" + fileName);
+                System.out.println("Ouverture du socket");
                 DatagramSocket ds = new DatagramSocket();
                 TFTPPackage rrq = new TFTPPackage(TFTPPackage.OP_CODE_READ, fileName, "ecriture"); //mode � changer
                 byte[] rrqByte = rrq.getByteArray();
                 DatagramPacket RRQ = new DatagramPacket(rrqByte, rrqByte.length, ia, port);
+                System.out.println("Envoie du RRQ");
                 ds.send(RRQ);
 
                 short numPaquet = 1;
@@ -38,13 +41,21 @@ public class ClientTFTP
                 DatagramPacket dr = new DatagramPacket(buffer, 516);
                 do
                 {
+                    System.out.println("Reception de paquet");
                     ds.receive(dr);
+                    System.out.println(Arrays.toString(dr.getData()));
+
                     TFTPPackage data = new TFTPPackage(dr.getData());
+                    if (data.getOpCode() == TFTPPackage.OP_CODE_ERROR)
+                    {
+                        System.out.println("Error");
+                    }
+                    // verifier si la paquet recue est pas une erreur
                     data.getIdBlock();
                     //ecriture dans le fichier
                     if (data.getIdBlock() == numPaquet)
                     {
-                        fea.write(data.getByteArray(), 2, 516);
+                        fea.write(data.getData(), 0, 512);
                         sendAcknowledgment(numPaquet, ds, ia, port);
                         numPaquet++;
                     }
@@ -53,7 +64,6 @@ public class ClientTFTP
                         sendAcknowledgment((short) (numPaquet - 1), ds, ia, port);
                     }
                 }
-
                 while (!isLastPacket(dr));
 
                 ds.setSoTimeout(1000);   // set the timeout in millisecounds.
@@ -65,7 +75,7 @@ public class ClientTFTP
                         System.out.println("Receiving message...");
                         ds.receive(dr); // receive the packet
                         System.out.println("Message received");
-                        sendAcknowledgment((short) (numPaquet), ds, ia, port);
+                        sendAcknowledgment((short) (numPaquet - 1), ds, ia, port);
                     }
                     catch (SocketTimeoutException e)
                     {
@@ -102,7 +112,7 @@ public class ClientTFTP
         // Ouvrir nomFichierLocal
         FileInputStream fileStream = new FileInputStream(pathFichierLocal);
         // Création d'un paquet WRQ
-        TFTPPackage wrq = new TFTPPackage(TFTPPackage.OP_CODE_WRITE, nomFichierLocal, TFTPPackage.MODE_OCTET); //TO DO modeeee!!!!!!!!!
+        TFTPPackage wrq = new TFTPPackage(TFTPPackage.OP_CODE_WRITE, nomFichierLocal, TFTPPackage.MODE_OCTET);
         byte[] wrqByte = wrq.getByteArray();
         System.out.println(Arrays.toString(wrqByte));
 
@@ -112,7 +122,7 @@ public class ClientTFTP
             DatagramSocket ds = new DatagramSocket();
             // Création d'un paquet WRQ
             DatagramPacket dp = new DatagramPacket(wrqByte, wrqByte.length, IPserv, portServ);
-            ds.send(dp); //La machine A �met un "WRQ" vers adr_ip_serv, port_serv (Machine B)
+            ds.send(dp); //La machine A emet un "WRQ" vers adr_ip_serv, port_serv (Machine B)
 
             // on reçoit le paquet du serveur après émission du WRQ
             byte[] ackByte0 = new byte[4];
