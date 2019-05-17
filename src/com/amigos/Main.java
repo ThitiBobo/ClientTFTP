@@ -15,7 +15,7 @@ public class Main
         //test sendFile
         try
         {
-            ClientTFTP.sendFile(InetAddress.getByName("localhost"), (short) 69, "test.txt", "C:\\Users\\Dorian\\Desktop\\test.txt");
+            ClientTFTP.sendFile(InetAddress.getByName("localhost"), (short) 69, "petit.txt", "C:\\Users\\Dorian\\Desktop\\petit.txt");
 
         }
         catch (Exception e)
