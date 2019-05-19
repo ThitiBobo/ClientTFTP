@@ -20,7 +20,7 @@ public class TFTPPackage {
 
     private final int maxSizeBlock = 512;
 
-    private byte _idBlock;
+    private int _idBlock;
     private byte _opCode;
     private byte _errorCode;
     private String _mode;
@@ -33,7 +33,7 @@ public class TFTPPackage {
         return maxSizeBlock;
     }
 
-    public short getIdBlock() {
+    public int getIdBlock() {
         return _idBlock;
     }
 
@@ -72,7 +72,7 @@ public class TFTPPackage {
         _length = 2 + filename.getBytes().length + mode.getBytes().length + 2;
     }
 
-    public TFTPPackage(byte idBlock, byte[] data){ //DATA
+    public TFTPPackage(int idBlock, byte[] data){ //DATA
         _opCode = OP_CODE_DATA;
         _idBlock = idBlock;
         _data = data;
@@ -81,7 +81,7 @@ public class TFTPPackage {
     }
     
 
-    public TFTPPackage(byte idBlock){ //ACK
+    public TFTPPackage(int idBlock){ //ACK
         _opCode = OP_CODE_ACK;
         _idBlock = idBlock;
         _length = 4;
@@ -127,15 +127,23 @@ public class TFTPPackage {
             _mode = new String(mode);
 
         }else if(_opCode == OP_CODE_DATA){
-            buffer.get();
-            _idBlock = buffer.get();
+            ByteBuffer databuffer = ByteBuffer.allocate(4);
+            databuffer.put((byte)0);
+            databuffer.put((byte)0);
+            databuffer.put(buffer.get());
+            databuffer.put(buffer.get());
+            _idBlock = databuffer.getInt(0);
             int pos;
             _data = new byte[buffer.limit() - buffer.position()];
             buffer.get(_data,0,buffer.limit() - buffer.position());
 
         }else if(_opCode == OP_CODE_ACK){
-            buffer.get();
-            _idBlock = buffer.get();
+            ByteBuffer databuffer = ByteBuffer.allocate(4);
+            databuffer.put((byte)0);
+            databuffer.put((byte)0);
+            databuffer.put(buffer.get());
+            databuffer.put(buffer.get());
+            _idBlock = databuffer.getInt(0);
         }else if(_opCode == OP_CODE_ERROR){
             buffer.get();
             _errorCode = buffer.get();
@@ -164,12 +172,16 @@ public class TFTPPackage {
             }
             buffer.put((byte)0);
         }else if(_opCode == OP_CODE_DATA){
-            buffer.put((byte)0);
-            buffer.put(_idBlock);
+            ByteBuffer datebuffer = ByteBuffer.allocate(4);
+            datebuffer.putInt(_idBlock);
+            buffer.put(datebuffer.get(2));
+            buffer.put(datebuffer.get(3));
             buffer.put(_data);
         }else if(_opCode == OP_CODE_ACK){
-            buffer.put((byte)0);
-            buffer.put(_idBlock);
+            ByteBuffer datebuffer = ByteBuffer.allocate(4);
+            datebuffer.putInt(_idBlock);
+            buffer.put(datebuffer.get(2));
+            buffer.put(datebuffer.get(3));
         }else if(_opCode == OP_CODE_ERROR){
             buffer.put((byte)0);
             buffer.put(_errorCode);
