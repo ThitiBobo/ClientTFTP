@@ -1,10 +1,13 @@
 package com.amigos.tftp;
 
-import java.io.BufferedReader;
+import CustomedExceptions.ServerSideException;
+import CustomedExceptions.UnknownFileFormatException;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -15,6 +18,7 @@ import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
+import javax.imageio.ImageIO;
 
 public class ClientTFTP
 {
@@ -105,116 +109,269 @@ public class ClientTFTP
             }
             System.out.println("Fin");
             return 0;
-
         }
     }
 
-    public static int sendFile(InetAddress IPserv, short portServ, String nomFichierLocal, String pathFichierLocal) throws FileNotFoundException
+    /**
+     * Checks if a file is an image or note
+     *
+     * @param nomFichier the filename
+     * @return true if the file is .png or .jpg. False if it is .txt. Exception
+     * otherwise
+     * @throws UnknownFileFormatException if the format is not .txt, .png or
+     * .jpg
+     */
+    private static boolean isImg(String nomFichier) throws UnknownFileFormatException
     {
-        // Ouvrir nomFichierLocal
-        FileInputStream fileStream = new FileInputStream(pathFichierLocal);
-        // Création d'un paquet WRQ
-        TFTPPackage wrq = new TFTPPackage(TFTPPackage.OP_CODE_WRITE, nomFichierLocal, TFTPPackage.MODE_OCTET);
-        byte[] wrqByte = wrq.getByteArray();
-        System.out.println("WRQ : " + Arrays.toString(wrqByte));
+        String extension = nomFichier.substring(nomFichier.lastIndexOf(".") + 1);
+        if ("txt".equals(extension))
+        {
+            return false;
+        }
+        else if ("png".equals(extension) || "jpg".equals(extension))
+        {
+            return true;
+        }
+        throw new UnknownFileFormatException("The file format \" " + extension + "\" is not managed by the program.");
+    }
 
+    /**
+     * Envoie un fichier en respectant la norme RFC 1350 TFTP
+     *
+     * @param IPserv L'ip du serveur
+     * @param portServ Le port du serveur
+     * @param nomFichierLocal Le nom du fichier local à envoyer
+     * @param pathFichierLocal Le chemin vers le fichier local
+     * @return
+     * @throws FileNotFoundException : Si le fichier n'est pas trouvé
+     * @throws ServerSideException : Si une exception est générée côté serveur
+     */
+    public static int sendFile(InetAddress IPserv, short portServ, String nomFichierLocal, String pathFichierLocal) throws FileNotFoundException, ServerSideException, IOException
+    {
+        FileInputStream fileStream = new FileInputStream(pathFichierLocal);;
+        ByteArrayOutputStream imageStream = new ByteArrayOutputStream();
+        BufferedImage image = null;
+        byte[] imageBytes;
         try
         {
-            // Affectation port anonyme
-            DatagramSocket ds = new DatagramSocket();
-            // Création d'un paquet WRQ
-            DatagramPacket dp = new DatagramPacket(wrqByte, wrqByte.length, IPserv, portServ);
-            ds.send(dp); //La machine A emet un "WRQ" vers adr_ip_serv, port_serv (Machine B)
-
-            // on reçoit le paquet du serveur après émission du WRQ
-            byte[] ackByte0 = new byte[4];
-            DatagramPacket rep = new DatagramPacket(ackByte0, ackByte0.length);
-            ds.receive(rep);
-            System.out.println("Reponse serveur : " + Arrays.toString(ackByte0));
-            // Si on reçoit un ACK0, on commence l'envoi du fichier
-            if (getPacketOPcode(ackByte0) == TFTPPackage.OP_CODE_ACK)
+            //Check du format du fichier
+            boolean isFileAnImg = isImg(nomFichierLocal);
+            if (isFileAnImg)
             {
-                int eof = 0;
-                byte idBlock = 1;
-                TFTPPackage ackN = null;
-                byte[] ackServResponse;
-                do
+                File f = new File(pathFichierLocal);
+                try
                 {
-                    // on présume que le serveur va envoyer un ACK alors on crée un array de taille 4 mais si le serveur répond
-                    // autre chose qu'un ack N, peut poser PB -> à changer, pourrait être plus rigoureux
-                    ackServResponse = new byte[4];
-                    // Liste de bytes de data
-                    ArrayList<Byte> dataList = new ArrayList<>();
-                    int byteCourant;
-                    for (int i = 0; i < 512; i++)
-                    {
-                        byteCourant = fileStream.read();
-                        if (byteCourant == -1)
-                        {
-                            eof = -1;
-                            break;
-                        }
-                        else if (byteCourant > -128 && byteCourant < 128)
-                        {
-                            dataList.add((byte) byteCourant);
-                            //System.out.println((byte) byteCourant);
-                        }
-                    }
-
-                    // on crée un array de bytes à partir de la liste de bytes
-                    byte[] dataArray = new byte[dataList.size()];
-                    for (int i = 0; i < dataList.size(); i++)
-                    {
-                        dataArray[i] = dataList.get(i);
-                    }
-
-                    //////////////// MAJ 17/05 -- PROBLEME IL SEMBLE QUE PUMPKIN NE RECOIT JAMAIS LE DATA(1)
-                    // OU ALORS LE DATA(1) N'EST PAS BIEN FORMÉ
-                    // "UDP PACKET RECEIVE FAILED"
-                    // On crée un nouveau paquet DATA(idBlock)
-                    TFTPPackage packetObject = new TFTPPackage(idBlock, dataArray);
-                    byte[] packet = packetObject.getByteArray();
-
-                    System.out.println("DATA(1) : " + Arrays.toString(packet));
-                    DatagramPacket dppData = new DatagramPacket(packet, packet.length, IPserv, rep.getPort());
-                    // On l'envoie
-
-                    ds.send(dppData);
-
-                    ///////////////// PROB
-                    // On réceptionne le ACK du serveur (norme du protocole) // PROB : RECOIT UN ACK0
-                    DatagramPacket serverResponse = new DatagramPacket(ackServResponse, ackServResponse.length);
-                    ds.receive(serverResponse);
-
-                    ackServResponse = serverResponse.getData();
-                    System.out.println("Réponse du serveur : " + Arrays.toString(ackServResponse));
-                    idBlock++;
+                    image = ImageIO.read(f);
+                    ImageIO.write(image, nomFichierLocal.substring(nomFichierLocal.lastIndexOf(".") + 1), imageStream);
 
                 }
-                // tant que EOF n'a pas été rencontré et que le ACK est bon
-                while (eof != -1 && getPacketOPcode(ackServResponse) == TFTPPackage.OP_CODE_ACK /**
-                         * && getPacketNo(ackServResponse) == idBlock*
-                         */
-                        );
+                catch (IOException e)
+                {
+                    System.out.println("EXCEPTION : " + e);
+                }
             }
 
-        }
-        catch (SocketException e)
-        {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-            System.out.println(e);
-        }
-        catch (IOException e)
-        {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-            System.out.println(e);
-        }
+            // Création d'un paquet WRQ (objet)
+            TFTPPackage wrq = new TFTPPackage(TFTPPackage.OP_CODE_WRITE, nomFichierLocal, TFTPPackage.MODE_OCTET);
+            // Conversion du paquet WRQ (objet) en paquet WRQ brut (tableau de bytes)
+            byte[] wrqByte = wrq.getByteArray();
+            // affichage (debug)
+            System.out.println("WRQ : " + Arrays.toString(wrqByte));
+            try
+            {
+                /**
+                 * EMISSION WRQ
+                 */
+                // Création d'un datagramSocket (Affectation port anonyme)
+                DatagramSocket ds = new DatagramSocket();
+                // timeout de 30 s
+                ds.setSoTimeout(30000);
+                // Création d'un DatagramPacket WRQ
+                DatagramPacket dpWrq = new DatagramPacket(wrqByte, wrqByte.length, IPserv, portServ);
+                //La machine A emet un "WRQ" vers adr_ip_serv, port_serv (Machine B)
+                ds.send(dpWrq);
 
+                /**
+                 * RECEPTION ACK(0)
+                 */
+                // Création d'un tableau de 100 bytes qui contiendra la réponse du serveur
+                byte[] firstServerResponse = new byte[100];
+                // Création d'un DatagramPacket contenant le réponse du serveur
+                DatagramPacket rep = new DatagramPacket(firstServerResponse, firstServerResponse.length);
+                // Réception du DatagramPacket
+                ds.receive(rep);
+                // affichage (DEBUG)
+                System.out.println("Reponse serveur : " + Arrays.toString(firstServerResponse));
+
+                // Si on reçoit un ACK0, on commence l'envoi du fichier
+                if (getPacketOPcode(firstServerResponse) == TFTPPackage.OP_CODE_ACK && getPacketNo(firstServerResponse) == 0)
+                {
+                    int eof = 0;
+                    int idBlock = 1;
+                    TFTPPackage ackN = null;
+                    byte[] serverResponse;
+                    byte[] packet;
+                    imageBytes = imageStream.toByteArray();
+                    int nbBlocsTailleMax = imageBytes.length / getMaxDataBlockSize();
+                    int tailleDernierBloc = imageBytes.length % getMaxDataBlockSize();
+                    int nbBlocsTailleMaxFaits = 0;
+                    int offset = 0;
+
+                    // émission des données
+                    do
+                    {
+                        // réallocation d'un tableau de taille 100 pour la réponse du serveur.
+                        serverResponse = new byte[100];
+
+                        /**
+                         * si le fichier est une image -> lecture = traitement
+                         * différent qu'avec le texte
+                         */
+                        if (isFileAnImg)
+                        {
+                            byte[] rawData;
+                            if (nbBlocsTailleMaxFaits < nbBlocsTailleMax)
+                            {
+                                rawData = new byte[getMaxDataBlockSize()];
+                                for (int i = nbBlocsTailleMaxFaits * getMaxDataBlockSize(), j = 0; i < (nbBlocsTailleMaxFaits + 1) * getMaxDataBlockSize(); i++, j++)
+                                {
+                                    rawData[j] = imageBytes[i];
+                                }
+                            }
+                            else
+                            {
+                                rawData = new byte[tailleDernierBloc];
+                                for (int i = nbBlocsTailleMaxFaits * getMaxDataBlockSize(), j = 0; i < imageBytes.length; i++, j++)
+                                {
+                                    rawData[j] = imageBytes[i];
+                                }
+                            }
+                            packet = (new TFTPPackage((byte) idBlock, rawData)).getByteArray();
+                        }
+                        // si le fichier n'est pas une image, c'est du texte
+                        /**
+                         * Lecture du fichier texte par blocs de 512 bytes. On
+                         * utilise un type dynamique (la liste) car on ne sait
+                         * pas à l'avance le nombre de bytes que l'on va lire
+                         * dans le fichier. A partir de cette liste, on créera
+                         * ensuite un tableau de bytes pour lequel, cette
+                         * fois-ci, l'on connaitra la taille.
+                         */
+                        else
+                        {
+                            ArrayList<Byte> dataList = new ArrayList<>();
+                            int byteCourant;
+                            for (int i = 0; i < 512; i++)
+                            {
+                                byteCourant = fileStream.read();
+                                if (byteCourant == -1)
+                                {
+                                    // on sort de la boucle si on atteint l'EOF
+                                    eof = -1;
+                                    break;
+                                }
+                                else if (byteCourant > -128 && byteCourant < 128)
+                                {
+                                    dataList.add((byte) byteCourant);
+                                    //System.out.println((byte) byteCourant);
+                                }
+                            }
+                            packet = (new TFTPPackage((byte) idBlock, ByteArrayList_To_ByteArray(dataList))).getByteArray();
+                        }
+                        // affichage paquet DATA(n) (debug)
+                        int value = idBlock & 0xFF;
+                        System.out.println("DATA(" + value + ") : " + Arrays.toString(packet));
+
+                        /**
+                         * Envoi du paquet
+                         */
+                        // Création du datagramPacket correspondant.
+                        DatagramPacket dpData = new DatagramPacket(packet, packet.length, IPserv, rep.getPort());
+                        // envoi
+                        ds.send(dpData);
+
+                        /**
+                         * Réception de la réponse du serveur
+                         */
+                        DatagramPacket serverResponseDp = new DatagramPacket(serverResponse, serverResponse.length);
+                        ds.receive(serverResponseDp);
+                        //debug
+                        System.out.println("Réponse du serveur : " + Arrays.toString(serverResponse));
+                        // si le paquet est un ERROR
+                        if (getPacketOPcode(serverResponse) == TFTPPackage.OP_CODE_ERROR)
+                        {
+                            String error = "Operations resulted in a server-side error \n";
+                            error += ErrorPacketToString(serverResponse);
+                            fileStream.close();
+                            imageStream.close();
+                            ds.close();
+                            throw new ServerSideException(error);
+                        }
+                        idBlock++;
+                    }
+                    // tant que l'eof n'est pas rencontré et que le ACK est correct (opcode = ack et numéro de paquet OK)
+                    while ((eof != -1) && (getPacketOPcode(serverResponse) == TFTPPackage.OP_CODE_ACK) /*&& (getPacketNo(serverResponse) == idBlock)*/);
+                }
+                // Sinon, si le serveur a répondu autre chose qu'un ACK0, il a répondu une erreur.
+                else
+                {
+                    String error = "Operations resulted in a server-side error \n";
+                    error += ErrorPacketToString(firstServerResponse);
+                    fileStream.close();
+                    imageStream.close();
+                    ds.close();
+                    throw new ServerSideException(error);
+                }
+            }
+            catch (SocketException ex)
+            {
+                System.out.println("EXCEPTION (SOCKET) : " + ex);
+                fileStream.close();
+                imageStream.close();
+                return -1;
+            }
+            catch (IOException ex)
+            {
+                System.out.println("EXCEPTION (send(DP)) : " + ex);
+                fileStream.close();
+                imageStream.close();
+                return -1;
+            }
+        }
+        catch (UnknownFileFormatException ex)
+        {
+            System.out.println("EXCEPTION : " + ex);
+            fileStream.close();
+            imageStream.close();
+            return -1;
+        }
+        fileStream.close();
+        imageStream.close();
         return 0;
     }
 
+    /**
+     * Convertit un Tableau de Bytes en Array de bytes
+     *
+     * @param bytesAsList Liste de Bytes
+     * @return Array de bytes
+     */
+    private static byte[] ByteArrayList_To_ByteArray(ArrayList<Byte> bytesAsList)
+    {
+        byte[] byteArray = new byte[bytesAsList.size()];
+        for (int i = 0; i < bytesAsList.size(); i++)
+        {
+            byteArray[i] = bytesAsList.get(i);
+        }
+        return byteArray;
+    }
+
+    /**
+     * Récupère les deux premiers bytes d'un paquet TFTP : L'opcode.
+     *
+     * @param buff le paquet TFTP
+     * @return un Opcode (short)
+     */
     private static short getPacketOPcode(byte[] buff)
     {
         byte[] twoFirstBytes = new byte[2];
@@ -223,12 +380,43 @@ public class ClientTFTP
         return ByteBuffer.wrap(twoFirstBytes).getShort();
     }
 
+    /**
+     * Récupère les deux seconds bytes d'un paquet TFTP : Le num de bloc (DATA
+     * ou ACK) ou l'errorCode (ERROR)
+     *
+     * @param buff un paquet TFTP ACK, DATA ou ERROR
+     * @return un short étant le numéro de paquet DATA ou ACK ou l'errorCode
+     * d'un paquet ERROR
+     */
     private static short getPacketNo(byte[] buff)
     {
         byte[] SecondAndThirdBytes = new byte[2];
         SecondAndThirdBytes[0] = buff[2];
         SecondAndThirdBytes[1] = buff[3];
         return ByteBuffer.wrap(SecondAndThirdBytes).getShort();
+    }
+
+    /**
+     * Permet de convertir un paquet TFTP Opcode = 5 (ERORR) en chaîne de
+     * caractères.
+     *
+     * @param buff le paquet
+     * @return String correspondant au paquet
+     */
+    private static String ErrorPacketToString(byte[] buff)
+    {
+        short opcode = getPacketOPcode(buff);
+        short errorCode = getPacketNo(buff);
+        String result = "Opcode : " + opcode + "\n";
+        result += "ErrorCode : " + errorCode + "\n";
+        result += "ErrorMessage : ";
+        int i = 4;
+        while (buff[i] != 0)
+        {
+            result += (char) buff[i];
+        }
+        result += "\n";
+        return result;
     }
 
     private static boolean isLastPacket(DatagramPacket dp)
@@ -255,14 +443,17 @@ public class ClientTFTP
         }
         catch (UnknownHostException e)
         {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            System.out.println("EXCEPTION : " + e);
         }
         catch (IOException e)
         {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            System.out.println("EXCEPTION : " + e);
         }
 
+    }
+
+    private static int getMaxDataBlockSize()
+    {
+        return 512;
     }
 }

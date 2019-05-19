@@ -5,9 +5,16 @@
  */
 package com.amigos.graphical;
 
+import CustomedExceptions.ServerSideException;
+import com.amigos.tftp.ClientTFTP;
 import java.awt.Color;
+import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.JFileChooser;
-import javax.swing.JTextPane;
+import javax.swing.JOptionPane;
 
 /**
  *
@@ -30,10 +37,6 @@ public class JFormClientTFTP extends javax.swing.JFrame
         this._tbPort.setText("69");
         this._tbPort.setEditable(false);
         this._tbPort.setBackground(Color.LIGHT_GRAY);
-
-        this._tbRemote.setText("C:\\");
-        this._tbRemote.setEditable(false);
-        this._tbRemote.setBackground(Color.LIGHT_GRAY);
 
         this.setResizable(false);
     }
@@ -187,12 +190,40 @@ public class JFormClientTFTP extends javax.swing.JFrame
 
     private void _btnSendActionPerformed(java.awt.event.ActionEvent evt)//GEN-FIRST:event__btnSendActionPerformed
     {//GEN-HEADEREND:event__btnSendActionPerformed
-        // Envoyer le fichier
+        String path = this._tbSrc.getText();
+        String fileName = path.substring(path.lastIndexOf("\\") + 1);
+        try
+        {
+            ClientTFTP.sendFile(InetAddress.getByName(this._tbIpServer.getText()), (short) 69, fileName, path);
+        }
+        catch (UnknownHostException ex)
+        {
+            System.out.println("EXCEPTION (L'ip est inconnue) : " + ex);
+            JOptionPane.showMessageDialog(null, "IP incorrecte !");
+        }
+        catch (ServerSideException ex)
+        {
+            System.out.println("EXCEPTION (côté serveur) : " + ex);
+            JOptionPane.showMessageDialog(null, "Une erreur est survenue côté serveur.");
+        }
+        catch (IOException ex)
+        {
+            System.out.println("EXCEPTION : " + ex);
+            JOptionPane.showMessageDialog(null, "Une erreur d'entrée sortie est survenue.");
+        }
     }//GEN-LAST:event__btnSendActionPerformed
 
     private void _btnReceiveActionPerformed(java.awt.event.ActionEvent evt)//GEN-FIRST:event__btnReceiveActionPerformed
     {//GEN-HEADEREND:event__btnReceiveActionPerformed
-        // Recevoir le fichier
+
+        try
+        {
+            ClientTFTP.receiveFile(this._tbRemote.getText(), (short) 69, InetAddress.getByName(this._tbIpServer.getText()));
+        }
+        catch (UnknownHostException ex)
+        {
+            Logger.getLogger(JFormClientTFTP.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }//GEN-LAST:event__btnReceiveActionPerformed
 
     private void _btnCloseActionPerformed(java.awt.event.ActionEvent evt)//GEN-FIRST:event__btnCloseActionPerformed
@@ -203,13 +234,14 @@ public class JFormClientTFTP extends javax.swing.JFrame
 
     private void _btnBrowseSrcActionPerformed(java.awt.event.ActionEvent evt)//GEN-FIRST:event__btnBrowseSrcActionPerformed
     {//GEN-HEADEREND:event__btnBrowseSrcActionPerformed
-        this._tbSrc.setText(this.getPathWithFileChoose());
+        this._tbSrc.setText(this.getPathWithFileChooser());
     }//GEN-LAST:event__btnBrowseSrcActionPerformed
 
-    private String getPathWithFileChoose()
+    private String getPathWithFileChooser()
     {
         String path = "";
         JFileChooser fileDialog = new JFileChooser();
+        fileDialog.setDialogTitle("Choix d'un fichier");
         fileDialog.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
         if (fileDialog.showOpenDialog(null) == JFileChooser.APPROVE_OPTION)
         {
