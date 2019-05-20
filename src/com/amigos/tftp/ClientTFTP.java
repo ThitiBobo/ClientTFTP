@@ -212,10 +212,11 @@ public class ClientTFTP
                     byte[] serverResponse;
                     byte[] packet;
                     imageBytes = imageStream.toByteArray();
-                    int nbBlocsTailleMax = imageBytes.length / getMaxDataBlockSize();
+                    long nbBlocsTailleMax = imageBytes.length / getMaxDataBlockSize();
                     int tailleDernierBloc = imageBytes.length % getMaxDataBlockSize();
+                    System.out.println("nbBlocsTailleMax : " + nbBlocsTailleMax);
+                    System.out.println("tailleDernierBloc : " + tailleDernierBloc);
                     int nbBlocsTailleMaxFaits = 0;
-                    int offset = 0;
 
                     // émission des données
                     do
@@ -237,6 +238,7 @@ public class ClientTFTP
                                 {
                                     rawData[j] = imageBytes[i];
                                 }
+                                nbBlocsTailleMaxFaits++;
                             }
                             else
                             {
@@ -245,8 +247,10 @@ public class ClientTFTP
                                 {
                                     rawData[j] = imageBytes[i];
                                 }
+                                eof = -1;
+                                //System.out.println("L'EOF est -1");
                             }
-                            packet = (new TFTPPackage((byte) idBlock, rawData)).getByteArray();
+                            packet = (new TFTPPackage(idBlock, rawData)).getByteArray();
                         }
                         // si le fichier n'est pas une image, c'est du texte
                         /**
@@ -280,7 +284,7 @@ public class ClientTFTP
                         }
                         // affichage paquet DATA(n) (debug)
                         int value = idBlock & 0xFF;
-                        System.out.println("DATA(" + value + ") : " + Arrays.toString(packet));
+                        //    System.out.println("DATA(" + value + ") : " + Arrays.toString(packet));
 
                         /**
                          * Envoi du paquet
@@ -296,7 +300,7 @@ public class ClientTFTP
                         DatagramPacket serverResponseDp = new DatagramPacket(serverResponse, serverResponse.length);
                         ds.receive(serverResponseDp);
                         //debug
-                        System.out.println("Réponse du serveur : " + Arrays.toString(serverResponse));
+                        //      System.out.println("Réponse du serveur : " + Arrays.toString(serverResponse));
                         // si le paquet est un ERROR
                         if (getPacketOPcode(serverResponse) == TFTPPackage.OP_CODE_ERROR)
                         {
