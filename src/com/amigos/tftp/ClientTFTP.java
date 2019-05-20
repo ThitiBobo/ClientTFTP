@@ -23,93 +23,88 @@ import javax.imageio.ImageIO;
 public class ClientTFTP
 {
 
-    public static int receiveFile(String fileName, int port, InetAddress ia)
+    public static int receiveFile(String fileName, int port, InetAddress ia) throws FileNotFoundException
     {
-        while (true)
+        try
         {
-            try
-            {
 
-                System.out.println("Creation du fichier");
-                FileOutputStream fea = new FileOutputStream("cheminrelatif" + fileName);
-                System.out.println("Ouverture du socket");
-                DatagramSocket ds = new DatagramSocket();
-                TFTPPackage rrq = new TFTPPackage(TFTPPackage.OP_CODE_READ, fileName, TFTPPackage.MODE_OCTET); //mode � changer
-                byte[] rrqByte = rrq.getByteArray();
-                DatagramPacket RRQ = new DatagramPacket(rrqByte, rrqByte.length, ia, port);
-                System.out.println("Envoie du RRQ");
-                ds.send(RRQ);
-                System.out.println("Envoie du RRQ");
-                byte numPaquet = 1;
-                byte[] buffer = new byte[516];
-                DatagramPacket dr = new DatagramPacket(buffer, 516);
-                do
+            System.out.println("Creation du fichier");
+            FileOutputStream fea = new FileOutputStream("cheminrelatif" + fileName);
+            System.out.println("Ouverture du socket");
+            DatagramSocket ds = new DatagramSocket();
+            TFTPPackage rrq = new TFTPPackage(TFTPPackage.OP_CODE_READ, fileName, TFTPPackage.MODE_OCTET); //mode � changer
+            byte[] rrqByte = rrq.getByteArray();
+            DatagramPacket RRQ = new DatagramPacket(rrqByte, rrqByte.length, ia, port);
+            System.out.println("Envoie du RRQ");
+            ds.send(RRQ);
+            System.out.println("Envoie du RRQ");
+            int numPaquet = 1;
+            byte[] buffer;
+            DatagramPacket dr;
+            do
+            {
+                buffer = new byte[516];
+                dr = new DatagramPacket(buffer, 516);
+                ds.receive(dr);
+                System.out.println(Arrays.toString(dr.getData()));
+                TFTPPackage data = new TFTPPackage(dr.getData());
+                if (data.getOpCode() == TFTPPackage.OP_CODE_ERROR)
                 {
-                    System.out.println("Reception de paquet");
-                    ds.receive(dr);
-                    System.out.println(Arrays.toString(dr.getData()));
-
-                    TFTPPackage data = new TFTPPackage(dr.getData());
-                    if (data.getOpCode() == TFTPPackage.OP_CODE_ERROR)
-                    {
-                        System.out.println("Error");
-                    }
-                    // verifier si la paquet recue est pas une erreur
-                    data.getIdBlock();
-                    //ecriture dans le fichier
-                    if (data.getIdBlock() == numPaquet)
-                    {
-                        fea.write(data.getData(), 0, 512);
-                        sendAcknowledgment(numPaquet, ds, ia, dr.getPort());
-                        numPaquet++;
-                    }
-                    else
-                    {
-                        sendAcknowledgment((byte) (numPaquet - 1), ds, ia, port);
-                    }
-                    System.out.println("lst packet" + isLastPacket(dr));
+                    System.out.println("Error");
                 }
-                while (!isLastPacket(dr));
-
-                ds.setSoTimeout(1000);   // set the timeout in millisecounds.
-
-                while (ds.isConnected())
-                {        // receive data until timeout
-                    try
-                    {
-                        System.out.println("Receiving message...");
-                        ds.receive(dr); // receive the packet
-                        System.out.println("Message received");
-                        sendAcknowledgment((byte) (numPaquet - 1), ds, ia, dr.getPort());
-                    }
-                    catch (SocketTimeoutException e)
-                    {
-                        // timeout exception.
-                        System.out.println("Timeout reached!!! " + e);
-                        fea.close();
-                        ds.close();
-                    }
+                // verifier si la paquet recue est pas une erreur
+                data.getIdBlock();
+                //ecriture dans le fichier
+                if (data.getIdBlock() == numPaquet)
+                {
+                    fea.write(data.getData(), 0, getSizeDataBlock(data.getData()));
+                    sendAcknowledgment(numPaquet, ds, ia, dr.getPort());
+                    numPaquet++;
+                }
+                else
+                {
+                    sendAcknowledgment((byte) (numPaquet - 1), ds, ia, port);
                 }
 
             }
-            catch (SocketException e)
-            {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
+            while (!isLastPacket(dr));
+
+            ds.setSoTimeout(1000);   // set the timeout in millisecounds.
+
+            while (ds.isConnected())
+            {        // receive data until timeout
+                try
+                {
+                    System.out.println("Receiving message...");
+                    ds.receive(dr); // receive the packet
+                    System.out.println("Message received");
+                    sendAcknowledgment((byte) (numPaquet - 1), ds, ia, dr.getPort());
+                }
+                catch (SocketTimeoutException e)
+                {
+                    // timeout exception.
+                    System.out.println("Timeout reached!!! " + e);
+                }
+                finally
+                {
+                    fea.close();
+                    ds.close();
+                }
             }
-            catch (FileNotFoundException e)
-            {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            }
-            catch (IOException e)
-            {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            }
-            System.out.println("Fin");
-            return 0;
+
         }
+        catch (SocketException e)
+        {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        catch (IOException e)
+        {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        System.out.println("Fin");
+        return 0;
     }
 
     /**
@@ -214,10 +209,7 @@ public class ClientTFTP
                     imageBytes = imageStream.toByteArray();
                     long nbBlocsTailleMax = imageBytes.length / getMaxDataBlockSize();
                     int tailleDernierBloc = imageBytes.length % getMaxDataBlockSize();
-                    System.out.println("nbBlocsTailleMax : " + nbBlocsTailleMax);
-                    System.out.println("tailleDernierBloc : " + tailleDernierBloc);
                     int nbBlocsTailleMaxFaits = 0;
-
                     // émission des données
                     do
                     {
@@ -280,7 +272,8 @@ public class ClientTFTP
                                     //System.out.println((byte) byteCourant);
                                 }
                             }
-                            packet = (new TFTPPackage((byte) idBlock, ByteArrayList_To_ByteArray(dataList))).getByteArray();
+                            packet = (new TFTPPackage(idBlock, ByteArrayList_To_ByteArray(dataList))).getByteArray();
+                            System.out.println(idBlock + " : " + Arrays.toString(packet));
                         }
                         // affichage paquet DATA(n) (debug)
                         int value = idBlock & 0xFF;
@@ -426,17 +419,9 @@ public class ClientTFTP
     private static boolean isLastPacket(DatagramPacket dp)
     {
         return dp.getLength() < 516 ? true : false;
-        /*if (dp.getLength() < 516) //v�rifier aussi si le paquet n'est pas un code erreur
-        {
-            return true;
-        }
-        else
-        {
-            return false;
-        }*/
     }
 
-    private static void sendAcknowledgment(byte idBlock, DatagramSocket ds, InetAddress ia, int port)
+    private static void sendAcknowledgment(int idBlock, DatagramSocket ds, InetAddress ia, int port)
     {
         try
         {
@@ -459,5 +444,15 @@ public class ClientTFTP
     private static int getMaxDataBlockSize()
     {
         return 512;
+    }
+
+    private static int getSizeDataBlock(byte[] data)
+    {
+        int i = 0;
+        while (i < data.length && data[i] != (byte) 0)
+        {
+            i++;
+        }
+        return i;
     }
 }

@@ -8,6 +8,7 @@ package com.amigos.graphical;
 import CustomedExceptions.ServerSideException;
 import com.amigos.tftp.ClientTFTP;
 import java.awt.Color;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -222,7 +223,18 @@ public class JFormClientTFTP extends javax.swing.JFrame
         }
         catch (UnknownHostException ex)
         {
-            Logger.getLogger(JFormClientTFTP.class.getName()).log(Level.SEVERE, null, ex);
+            System.out.println("EXCEPTION (L'ip est inconnue) : " + ex);
+            JOptionPane.showMessageDialog(null, "IP incorrecte !");
+        }
+        catch (FileNotFoundException e)
+        {
+            System.out.println("EXCEPTION (fichier non trouvé) : " + e);
+            JOptionPane.showMessageDialog(null, "FIchier introuvable !");
+        }
+        catch (Exception e)
+        {
+            System.out.println("EXCEPTION (erreur) : " + e);
+            JOptionPane.showMessageDialog(null, "Une erreur est survenue !");
         }
     }//GEN-LAST:event__btnReceiveActionPerformed
 
