@@ -143,7 +143,7 @@ public class ClientTFTP
      */
     public static int sendFile(InetAddress IPserv, short portServ, String nomFichierLocal, String pathFichierLocal) throws FileNotFoundException, ServerSideException, IOException
     {
-        FileInputStream fileStream = new FileInputStream(pathFichierLocal);;
+        FileInputStream fileStream = new FileInputStream(pathFichierLocal);
         ByteArrayOutputStream imageStream = new ByteArrayOutputStream();
         BufferedImage image = null;
         byte[] imageBytes;
@@ -163,6 +163,7 @@ public class ClientTFTP
                 catch (IOException e)
                 {
                     System.out.println("EXCEPTION : " + e);
+                    return -1;
                 }
             }
 
@@ -275,8 +276,6 @@ public class ClientTFTP
                             packet = (new TFTPPackage(idBlock, ByteArrayList_To_ByteArray(dataList))).getByteArray();
                             System.out.println(idBlock + " : " + Arrays.toString(packet));
                         }
-                        // affichage paquet DATA(n) (debug)
-                        int value = idBlock & 0xFF;
                         //    System.out.println("DATA(" + value + ") : " + Arrays.toString(packet));
 
                         /**
@@ -302,21 +301,27 @@ public class ClientTFTP
                             fileStream.close();
                             imageStream.close();
                             ds.close();
+                            // return 1
                             throw new ServerSideException(error);
                         }
                         idBlock++;
                     }
                     // tant que l'eof n'est pas rencontré et que le ACK est correct (opcode = ack et numéro de paquet OK)
                     while ((eof != -1) && (getPacketOPcode(serverResponse) == TFTPPackage.OP_CODE_ACK) /*&& (getPacketNo(serverResponse) == idBlock)*/);
+                    ds.close();
                 }
+
                 // Sinon, si le serveur a répondu autre chose qu'un ACK0, il a répondu une erreur.
                 else
                 {
                     String error = "Operations resulted in a server-side error \n";
-                    error += ErrorPacketToString(firstServerResponse);
+                    String er2 = ErrorPacketToString(firstServerResponse);
+                    error += er2;
+                    System.out.println(error);
                     fileStream.close();
                     imageStream.close();
                     ds.close();
+                    // return 1
                     throw new ServerSideException(error);
                 }
             }
@@ -327,20 +332,13 @@ public class ClientTFTP
                 imageStream.close();
                 return -1;
             }
-            catch (IOException ex)
-            {
-                System.out.println("EXCEPTION (send(DP)) : " + ex);
-                fileStream.close();
-                imageStream.close();
-                return -1;
-            }
         }
         catch (UnknownFileFormatException ex)
         {
             System.out.println("EXCEPTION : " + ex);
             fileStream.close();
             imageStream.close();
-            return -1;
+            return -3;
         }
         fileStream.close();
         imageStream.close();
