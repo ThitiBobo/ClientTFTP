@@ -29,7 +29,7 @@ public class ClientTFTP
         {
 
             System.out.println("Creation du fichier");
-            FileOutputStream fea = new FileOutputStream("C:\\Users\\Dorian\\Desktop\\PUMPKIN\\" + fileName);
+            FileOutputStream fea = new FileOutputStream("cheminrelatif" + fileName);
             System.out.println("Ouverture du socket");
             DatagramSocket ds = new DatagramSocket();
             TFTPPackage rrq = new TFTPPackage(TFTPPackage.OP_CODE_READ, fileName, TFTPPackage.MODE_OCTET); //mode � changer
